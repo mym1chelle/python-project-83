@@ -1,0 +1,6 @@
+.venv
+__pycache__
+.DS_Store
+.pytest_cache
+.coverage
+coverage.xml
