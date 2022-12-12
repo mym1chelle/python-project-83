@@ -23,10 +23,11 @@
             </nav>
         </header>
         {% with messages =  get_flashed_messages(with_categories=True) %}
-
-            {% for _, message in messages %}
-                <div class="alert alert-info" role="alert">{{ message }}</div>
-            {% endfor %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}" role="alert">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
         {% endwith %}
         <main class="flex-grow-1">
             <div class="container-lg mt-3">

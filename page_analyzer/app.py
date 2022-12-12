@@ -3,6 +3,7 @@ import psycopg2
 import validators
 from datetime import datetime
 import os
+import requests
 
 
 app = Flask(__name__)
@@ -62,32 +63,40 @@ def add_url():
                     INSERT INTO urls (name, created_at)
                     VALUES (%s, %s);""", (url, created_at))
                 conn.commit()
+                flash('Страница успешно добавлена', 'success')
                 with open('database.sql', 'w') as file:
                     cur.copy_to(file, 'urls', '|')
             else:
-                flash('Страница уже существует', 'warning')
+                flash('Страница уже существует', 'info')
                 cur.execute("SELECT id FROM urls WHERE name=(%s);", (url,))
                 redirect(f'urls/{cur.fetchone()[0]}')
         else:
-            flash('Некорректный URL', 'error')
+            flash('Некорректный URL', 'danger')
             return render_template('start_page.html', url_adress=url)
         cur.execute("SELECT id FROM urls WHERE name=(%s);", (url,))
         return redirect(f'urls/{cur.fetchone()[0]}')
     else:
-        cur.execute("SELECT * FROM urls ORDER BY created_at DESC;")
-        urls = cur.fetchall()
         cur.execute(
             """
-            SELECT created_at FROM url_checks
-            ORDER BY created_at DESC LIMIT 1;
+            SELECT *
+            FROM (
+            SELECT DISTINCT ON(dist_urls.id)
+            dist_urls.id, dist_urls.name,
+            sorted_checks.status_code, sorted_checks.created_at
+            FROM (SELECT * FROM urls ORDER BY created_at DESC) AS dist_urls
+            LEFT JOIN (
+                SELECT *
+                FROM url_checks
+                ORDER BY created_at DESC
+                ) AS sorted_checks
+            ON sorted_checks.url_id = dist_urls.id) as result;
             """
             )
-        date_last_check = cur.fetchall()
-        print(date_last_check)
+        last_check = cur.fetchall()
+        print(last_check)
         return render_template(
             "sites_table.html",
-            urls_data=urls,
-            date_last_check=date_last_check
+            last_check=last_check,
         )
 
 
@@ -98,7 +107,7 @@ def show_url(id):
     cur.execute(
         """
         SELECT * FROM url_checks
-        WHERE url_id=(%s) ORDER BY created_at DESC;
+        WHERE url_id=(%s) ORDER BY id DESC;
         """, (id,))
     checks = cur.fetchall()
     return render_template(
@@ -111,11 +120,18 @@ def show_url(id):
 @app.post('/urls/<id>/checks')
 def check_url(id):
     created_at = datetime.now()
-    cur.execute(
-        """
-        INSERT INTO url_checks (url_id, created_at)
-        VALUES (%s, %s);""", (id, created_at))
-    conn.commit()
-    with open('database.sql', 'w') as file:
-        cur.copy_to(file, 'urls', '|')
+    cur.execute("SELECT name FROM urls WHERE id=(%s);", (id,))
+    url = cur.fetchall()[0][0]
+    try:
+        r = requests.get(url)
+        status_code = r.status_code
+        cur.execute(
+            """
+            INSERT INTO url_checks (url_id, status_code, created_at)
+            VALUES (%s, %s, %s);""", (id, status_code, created_at))
+        conn.commit()
+        with open('database.sql', 'w') as file:
+            cur.copy_to(file, 'urls', '|')
+    except requests.exceptions.ConnectionError:
+        flash('Произошла ошибка при проверке', 'danger')
     return redirect(url_for('show_url', id=id))
