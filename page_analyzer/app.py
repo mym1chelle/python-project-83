@@ -1,5 +1,4 @@
-from flask import Flask, render_template, request, redirect,\
-    url_for, flash, get_flashed_messages
+from flask import Flask, render_template, request, redirect, flash
 import psycopg2
 import validators
 from datetime import datetime
