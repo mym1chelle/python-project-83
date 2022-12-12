@@ -30,29 +30,27 @@
         {% endwith %}
         <main class="flex-grow-1">
             <div class="container-lg mt-3">
-                {% for data in url_data %}
-                    <h1>Сайт: {{ data[1] }}</h1>
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover text-nowrap" data-test="url">
-                            <tbody>
-                                <tr>
-                                    <td>ID</td>
-                                    <td>{{ data[0] }}</td>
-                                </tr>
-                                <tr>
-                                    <td>Имя</td>
-                                    <td>{{ data[1] }}</td>
-                                <tr>
-                                </tr>
-                                    <td>Дата создания</td>
-                                    <td>{{ data[2] }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    {% endfor %}
+                <h1>Сайт: {{ url_data[1] }}</h1>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover text-nowrap" data-test="url">
+                        <tbody>
+                            <tr>
+                                <td>ID</td>
+                                <td>{{ url_data[0] }}</td>
+                            </tr>
+                            <tr>
+                                <td>Имя</td>
+                                <td>{{ url_data[1] }}</td>
+                            <tr>
+                            </tr>
+                                <td>Дата создания</td>
+                                <td>{{ url_data[2] }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
                 <h2 class="mt-5 mb-3">Проверки</h2>
-                <form method="post" action="/urls/1/checks">
+                <form method="post" action="/urls/{{ url_data[0] }}/checks">
                      <input type="submit" class="btn btn-primary" value="Запустить проверку">
                 </form>
                 <div>
@@ -66,46 +64,18 @@
                                 <th>description</th>
                                 <th>Дата создания</th>
                             </tr>
-                            <tr>
-                                <td>5</td>
-                                <td>200</td>
-                                <td>Apple</td>
-                                <td>Apple</td>
-                                <td></td>
-                                <td>2022-12-12</td>
-                            </tr>
-                            <tr>
-                                <td>4</td>
-                                <td>200</td>
-                                <td>Apple</td>
-                                <td>Apple</td>
-                                <td></td>
-                                <td>2022-12-12</td>
-                            </tr>
-                            <tr>
-                                <td>3</td>
-                                <td>200</td>
-                                <td>Apple</td>
-                                <td>Apple</td>
-                                <td></td>
-                                <td>2022-12-12</td>
-                            </tr>
-                            <tr>
-                                <td>2</td>
-                                <td>200</td>
-                                <td>Apple</td>
-                                <td>Apple</td>
-                                <td></td>
-                                <td>2022-12-12</td>
-                            </tr>
-                            <tr>
-                                <td>1</td>
-                                <td>200</td>
-                                <td>Apple</td>
-                                <td>Apple</td>
-                                <td></td>
-                                <td>2022-12-12</td>
-                            </tr>
+                            {% if checks_url %}
+                                {% for check in checks_url %}
+                                    <tr>
+                                        <td>{{ check[0] }}</td>
+                                        <td>{{ check[2] }}</td>
+                                        <td>{{ check[3] }}</td>
+                                        <td>{{ check[4] }}</td>
+                                        <td>{{ check[5] }}</td>
+                                        <td>{{ check[6] }}</td>
+                                    </tr>
+                                {% endfor %}
+                            {% endif %}  
                         </tbody>
                     </table>
                 </div>

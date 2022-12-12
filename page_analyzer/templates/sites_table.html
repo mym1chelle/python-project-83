@@ -31,13 +31,13 @@
                             <tr>
                                 <th>ID</th>
                                 <th>Имя</th>
-                                <th>Дата добавления</th>
+                                <th>Последняя проверка</th>
                             </tr>
                             {% for url in urls_data %}
                                 <tr>
                                     <td>{{ url[0] }}</td>
                                     <td><a href="/urls/{{ url[0] }}">{{ url[1] }}</a></td>
-                                    <td> {{ url[2] }}</td>
+                                    <td> {{ date_last_check | default('') }}</td>
                                 </tr>
                             {% endfor %}
                         </tbody>
