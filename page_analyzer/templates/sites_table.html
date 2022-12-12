@@ -37,7 +37,7 @@
                                 <tr>
                                     <td>{{ url[0] }}</td>
                                     <td><a href="/urls/{{ url[0] }}">{{ url[1] }}</a></td>
-                                    <td> {{ date_last_check | default('') }}</td>
+                                    <td> {{ date_last_check[0][0] | default('') }}</td>
                                 </tr>
                             {% endfor %}
                         </tbody>

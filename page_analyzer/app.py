@@ -82,7 +82,7 @@ def add_url():
             ORDER BY created_at DESC LIMIT 1;
             """
             )
-        date_last_check = cur.fetchall()[0][0]
+        date_last_check = cur.fetchall()
         print(date_last_check)
         return render_template(
             "sites_table.html",
