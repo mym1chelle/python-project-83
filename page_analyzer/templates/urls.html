@@ -1,26 +1,26 @@
 {% extends 'base.html' %}   
 {% block content %}
-    <h1>Сайт: {{ url_data[1] }}</h1>
+    <h1>Сайт: {{ url_data.name }}</h1>
     <div class="table-responsive">
         <table class="table table-bordered table-hover text-nowrap" data-test="url">
             <tbody>
                 <tr>
                     <td>ID</td>
-                    <td>{{ url_data[0] }}</td>
+                    <td>{{ url_data.id }}</td>
                 </tr>
                 <tr>
                     <td>Имя</td>
-                    <td>{{ url_data[1] }}</td>
+                    <td>{{ url_data.name }}</td>
                 <tr>
                 </tr>
                     <td>Дата создания</td>
-                    <td>{{ url_data[2] }}</td>
+                    <td>{{ url_data.created_at }}</td>
                 </tr>
             </tbody>
         </table>
     </div>
     <h2 class="mt-5 mb-3">Проверки</h2>
-    <form method="post" action="{{ url_for('check_url', id=url_data[0]) }}">
+    <form method="post" action="{{ url_for('check_url', id=url_data.id) }}">
          <input type="submit" class="btn btn-primary" value="Запустить проверку">
     </form>
     <div>
@@ -37,12 +37,12 @@
                 {% if checks_url %}
                     {% for check in checks_url %}
                         <tr>
-                            <td>{{ check[0] }}</td>
-                            <td>{{ check[2] }}</td>
-                            <td>{{ check[3] }}</td>
-                            <td>{{ check[4] }}</td>
-                            <td>{{ check[5] }}</td>
-                            <td>{{ check[6] }}</td>
+                            <td>{{ check.id }}</td>
+                            <td>{{ check.status_code }}</td>
+                            <td>{{ check.h1 }}</td>
+                            <td>{{ check.title }}</td>
+                            <td>{{ check.description }}</td>
+                            <td>{{ check.created_at }}</td>
                         </tr>
                     {% endfor %}
                 {% endif %}  

@@ -12,10 +12,18 @@
                 </tr>
                 {% for url in last_check %}
                     <tr>
-                        <td>{{ url[0] }}</td>
-                        <td><a href="{{ url_for('show_url', id=url[0]) }}">{{ url[1] }}</a></td>
-                        <td> {{ url[3] | default('') }}</td>
-                        <td> {{ url[2] | default('') }}</td>
+                        <td>{{ url.id }}</td>
+                        <td><a href="{{ url_for('show_url', id=url.id) }}">{{ url.name }}</a></td>
+                        {% if url.created_at %}
+                            <td> {{ url.created_at }}</td>
+                        {% else %}
+                            <td></td>
+                        {% endif %}
+                        {% if url.status_code %}
+                            <td>{{ url.status_code }}</td>
+                        {% else %}
+                            <td></td>
+                        {% endif %}
                     </tr>
                 {% endfor %}
             </tbody>
