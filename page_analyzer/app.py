@@ -11,9 +11,10 @@ from bs4 import BeautifulSoup
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-DATABASE_URL = os.getenv('DATABASE_URL')
+app.config['DATABASE_URL'] = os.getenv('DATABASE_URL')
+
 try:
-    conn = psycopg2.connect(DATABASE_URL)
+    conn = psycopg2.connect(app.config['DATABASE_URL'])
 except (Exception, Error) as error:
     print('Can`t establish connection to database', error)
 
