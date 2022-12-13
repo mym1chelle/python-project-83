@@ -66,7 +66,7 @@ def add_url():
                 conn.commit()
                 flash('Страница успешно добавлена', 'success')
                 with open('database.sql', 'w') as file:
-                    cur.copy_to(file, 'urls', '|')
+                    cur.copy_to(file, 'urls', ',')
             else:
                 flash('Страница уже существует', 'info')
                 cur.execute("SELECT id FROM urls WHERE name=(%s);", (url,))
@@ -146,7 +146,7 @@ def check_url(id):
             (id, status_code, h1, title, description, created_at))
         conn.commit()
         with open('database.sql', 'w') as file:
-            cur.copy_to(file, 'url_checks', '|')
+            cur.copy_to(file, 'url_checks', ',')
     except requests.exceptions.ConnectionError:
         flash('Произошла ошибка при проверке', 'danger')
     return redirect(url_for('show_url', id=id))
