@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, redirect, flash, url_for
 import psycopg2
-from psycopg2 import Error
 from psycopg2.extras import NamedTupleCursor
 import validators
 from datetime import datetime
@@ -14,9 +13,9 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 app.config['DATABASE_URL'] = os.getenv('DATABASE_URL')
 
 
-conn = psycopg2.connect(app.config['DATABASE_URL'])
+connect = psycopg2.connect(app.config['DATABASE_URL'])
 
-with conn.cursor() as cur:
+with connect.cursor() as cur:
     cur.execute(
         """
         CREATE TABLE IF NOT EXISTS urls (
@@ -25,7 +24,7 @@ with conn.cursor() as cur:
             created_at date
             );"""
         )
-with conn.cursor() as cur:
+with connect.cursor() as cur:
     cur.execute(
         """
         CREATE TABLE IF NOT EXISTS url_checks (
@@ -38,7 +37,7 @@ with conn.cursor() as cur:
             created_at date
             );"""
         )
-conn.commit()
+connect.commit()
 
 
 @app.route('/')
@@ -55,16 +54,16 @@ def add_url():
         url = data.get('url')
         if validators.url(url):
             created_at = datetime.now()
-            with conn.cursor(cursor_factory=NamedTupleCursor) as cur:
+            with connect.cursor(cursor_factory=NamedTupleCursor) as cur:
                 cur.execute("SELECT id FROM urls WHERE name=(%s);", (url,))
                 url_id = cur.fetchone()
             if url_id is None:
-                with conn.cursor() as cur:
+                with connect.cursor() as cur:
                     cur.execute(
                         """
                         INSERT INTO urls (name, created_at)
                         VALUES (%s, %s);""", (url, created_at))
-                conn.commit()
+                connect.commit()
                 flash('Страница успешно добавлена', 'success')
             else:
                 flash('Страница уже существует', 'info')
@@ -73,7 +72,7 @@ def add_url():
             flash('Некорректный URL', 'danger')
             return render_template('start_page.html', url_adress=url)
     else:
-        with conn.cursor(cursor_factory=NamedTupleCursor) as cur:
+        with connect.cursor(cursor_factory=NamedTupleCursor) as cur:
             cur.execute(
                 """
                 SELECT *
@@ -99,10 +98,10 @@ def add_url():
 
 @app.route('/urls/<id>')
 def show_url(id):
-    with conn.cursor(cursor_factory=NamedTupleCursor) as cur:
+    with connect.cursor(cursor_factory=NamedTupleCursor) as cur:
         cur.execute("SELECT * FROM urls WHERE id=(%s);", (id,))
         url = cur.fetchone()
-    with conn.cursor(cursor_factory=NamedTupleCursor) as cur:
+    with connect.cursor(cursor_factory=NamedTupleCursor) as cur:
         cur.execute(
             """
             SELECT * FROM url_checks
@@ -119,7 +118,7 @@ def show_url(id):
 @app.post('/urls/<id>/checks')
 def check_url(id):
     created_at = datetime.now()
-    with conn.cursor(cursor_factory=NamedTupleCursor) as cur:
+    with connect.cursor(cursor_factory=NamedTupleCursor) as cur:
         cur.execute("SELECT name FROM urls WHERE id=(%s);", (id,))
         url_name = cur.fetchone()
     try:
@@ -136,14 +135,14 @@ def check_url(id):
             h1 = soup.find('h1').string
         if soup.find("meta", {"name": "description"}):
             description = soup.find("meta", {"name": "description"})['content']
-        with conn.cursor() as cur:
+        with connect.cursor() as cur:
             cur.execute(
                 """
                 INSERT INTO url_checks (
                 url_id, status_code, h1, title, description, created_at)
                 VALUES (%s, %s, %s, %s, %s, %s);""",
                 (id, status_code, h1, title, description, created_at))
-        conn.commit()
+        connect.commit()
     except requests.exceptions.ConnectionError:
         flash('Произошла ошибка при проверке', 'danger')
     return redirect(url_for('show_url', id=id))
