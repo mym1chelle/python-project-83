@@ -13,11 +13,8 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 app.config['DATABASE_URL'] = os.getenv('DATABASE_URL')
 
-try:
-    conn = psycopg2.connect(app.config['DATABASE_URL'])
-except (Exception, Error) as error:
-    print('Can`t establish connection to database', error)
 
+conn = psycopg2.connect(app.config['DATABASE_URL'])
 
 with conn.cursor() as cur:
     cur.execute(
