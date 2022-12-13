@@ -63,9 +63,13 @@ def add_url():
                         VALUES (%s, %s);""", (url, created_at))
                 connect.commit()
                 flash('Страница успешно добавлена', 'success')
+                with connect.cursor(cursor_factory=NamedTupleCursor) as cur:
+                    cur.execute("SELECT id FROM urls WHERE name=(%s);", (url,))
+                    id = cur.fetchone()
+                return redirect(f'urls/{id.id}')
             else:
                 flash('Страница уже существует', 'info')
-                redirect(f'urls/{url_id.id}')
+                return redirect(f'urls/{url_id.id}')
         else:
             flash('Некорректный URL', 'danger')
             return render_template('start_page.html', url_adress=url)
@@ -130,7 +134,7 @@ def check_url(id):
         if soup.title:
             title = soup.title.string
         if soup.find('h1'):
-            h1 = soup.find('h1').string
+            h1 = soup.find('h1').text
         if soup.find("meta", {"name": "description"}):
             description = soup.find("meta", {"name": "description"})['content']
         with connect.cursor() as cur:
