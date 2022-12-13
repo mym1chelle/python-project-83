@@ -36,10 +36,6 @@ cur.execute(
 conn.commit()
 
 
-with open('database.sql', 'w') as file:
-    cur.copy_to(file, 'urls', '|')
-
-
 @app.route('/')
 def index():
     return render_template(
@@ -145,8 +141,6 @@ def check_url(id):
             VALUES (%s, %s, %s, %s, %s, %s);""",
             (id, status_code, h1, title, description, created_at))
         conn.commit()
-        with open('database.sql', 'w') as file:
-            cur.copy_to(file, 'url_checks', ',')
     except requests.exceptions.ConnectionError:
         flash('Произошла ошибка при проверке', 'danger')
     return redirect(url_for('show_url', id=id))
