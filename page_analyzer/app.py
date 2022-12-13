@@ -7,13 +7,11 @@ import os
 import requests
 from bs4 import BeautifulSoup
 
+DATABASE_URL = os.getenv('DATABASE_URL')
+connect = psycopg2.connect(DATABASE_URL)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-app.config['DATABASE_URL'] = os.getenv('DATABASE_URL')
-
-
-connect = psycopg2.connect(app.config['DATABASE_URL'])
 
 with connect.cursor() as cur:
     cur.execute(
