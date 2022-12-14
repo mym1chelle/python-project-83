@@ -3,9 +3,13 @@ import psycopg2
 from psycopg2.extras import NamedTupleCursor
 import validators
 from datetime import datetime
+from dotenv import load_dotenv
 import os
 import requests
 from bs4 import BeautifulSoup
+
+
+load_dotenv()
 
 
 def get_db_connection():
