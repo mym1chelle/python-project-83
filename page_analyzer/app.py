@@ -174,6 +174,7 @@ def check_url(id):
                 (id, status_code, h1, title, description, created_at))
         connect.commit()
         connect.close()
+        flash('Страница успешно проверена', 'success')
     except requests.exceptions.ConnectionError:
         flash('Произошла ошибка при проверке', 'danger')
     return redirect(url_for('show_url', id=id))
