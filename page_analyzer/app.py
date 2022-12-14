@@ -156,25 +156,31 @@ def check_url(id):
         description = ''
         r = requests.get(url_name.name)
         status_code = r.status_code
-        html_doc = r.text
-        soup = BeautifulSoup(html_doc, 'html.parser')
-        if soup.title:
-            title = soup.title.string
-        if soup.find('h1'):
-            h1 = soup.find('h1').text
-        if soup.find("meta", {"name": "description"}):
-            description = soup.find("meta", {"name": "description"})['content']
-        connect = get_db_connection()
-        with connect.cursor() as cur:
-            cur.execute(
-                """
-                INSERT INTO url_checks (
-                url_id, status_code, h1, title, description, created_at)
-                VALUES (%s, %s, %s, %s, %s, %s);""",
-                (id, status_code, h1, title, description, created_at))
-        connect.commit()
-        connect.close()
-        flash('Страница успешно проверена', 'success')
+        if status_code == 200:
+            html_doc = r.text
+            soup = BeautifulSoup(html_doc, 'html.parser')
+            if soup.title:
+                title = soup.title.string
+            if soup.find('h1'):
+                h1 = soup.find('h1').text
+            if soup.find("meta", {"name": "description"}):
+                description = soup.find(
+                    "meta",
+                    {"name": "description"}
+                    )['content']
+            connect = get_db_connection()
+            with connect.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO url_checks (
+                    url_id, status_code, h1, title, description, created_at)
+                    VALUES (%s, %s, %s, %s, %s, %s);""",
+                    (id, status_code, h1, title, description, created_at))
+            connect.commit()
+            connect.close()
+            flash('Страница успешно проверена', 'success')
+        else:
+            flash('Произошла ошибка при проверке', 'danger')
     except requests.exceptions.ConnectionError:
         flash('Произошла ошибка при проверке', 'danger')
     return redirect(url_for('show_url', id=id))
