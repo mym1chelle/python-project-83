@@ -7,12 +7,16 @@ import os
 import requests
 from bs4 import BeautifulSoup
 
-DATABASE_URL = os.getenv('DATABASE_URL')
-connect = psycopg2.connect(DATABASE_URL)
+
+def get_db_connection():
+    conn = psycopg2.connect(os.getenv('DATABASE_URL'))
+    return conn
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
+connect = get_db_connection()
 with connect.cursor() as cur:
     cur.execute(
         """
@@ -22,6 +26,10 @@ with connect.cursor() as cur:
             created_at date
             );"""
         )
+connect.commit()
+connect.close()
+
+connect = get_db_connection()
 with connect.cursor() as cur:
     cur.execute(
         """
@@ -36,6 +44,7 @@ with connect.cursor() as cur:
             );"""
         )
 connect.commit()
+connect.close()
 
 
 @app.route('/')
@@ -52,20 +61,26 @@ def add_url():
         url = data.get('url')
         if validators.url(url):
             created_at = datetime.now()
+            connect = get_db_connection()
             with connect.cursor(cursor_factory=NamedTupleCursor) as cur:
                 cur.execute("SELECT id FROM urls WHERE name=(%s);", (url,))
                 url_id = cur.fetchone()
+            connect.close()
             if url_id is None:
+                connect = get_db_connection()
                 with connect.cursor() as cur:
                     cur.execute(
                         """
                         INSERT INTO urls (name, created_at)
                         VALUES (%s, %s);""", (url, created_at))
                 connect.commit()
+                connect.close()
                 flash('Страница успешно добавлена', 'success')
+                connect = get_db_connection()
                 with connect.cursor(cursor_factory=NamedTupleCursor) as cur:
                     cur.execute("SELECT id FROM urls WHERE name=(%s);", (url,))
                     id = cur.fetchone()
+                connect.close()
                 return redirect(f'urls/{id.id}')
             else:
                 flash('Страница уже существует', 'info')
@@ -74,6 +89,7 @@ def add_url():
             flash('Некорректный URL', 'danger')
             return render_template('start_page.html', url_adress=url)
     else:
+        connect = get_db_connection()
         with connect.cursor(cursor_factory=NamedTupleCursor) as cur:
             cur.execute(
                 """
@@ -92,6 +108,7 @@ def add_url():
                 """
                 )
             all_urls = cur.fetchall()
+        connect.close()
         return render_template(
             "sites_table.html",
             last_check=all_urls,
@@ -100,9 +117,12 @@ def add_url():
 
 @app.route('/urls/<id>')
 def show_url(id):
+    connect = get_db_connection()
     with connect.cursor(cursor_factory=NamedTupleCursor) as cur:
         cur.execute("SELECT * FROM urls WHERE id=(%s);", (id,))
         url = cur.fetchone()
+    connect.close()
+    connect = get_db_connection()
     with connect.cursor(cursor_factory=NamedTupleCursor) as cur:
         cur.execute(
             """
@@ -110,6 +130,7 @@ def show_url(id):
             WHERE url_id=(%s) ORDER BY id DESC;
             """, (id,))
         checks = cur.fetchall()
+    connect.close()
     return render_template(
         "urls.html",
         url_data=url,
@@ -120,9 +141,11 @@ def show_url(id):
 @app.post('/urls/<id>/checks')
 def check_url(id):
     created_at = datetime.now()
+    connect = get_db_connection()
     with connect.cursor(cursor_factory=NamedTupleCursor) as cur:
         cur.execute("SELECT name FROM urls WHERE id=(%s);", (id,))
         url_name = cur.fetchone()
+    connect.close()
     try:
         title = ''
         h1 = ''
@@ -137,6 +160,7 @@ def check_url(id):
             h1 = soup.find('h1').text
         if soup.find("meta", {"name": "description"}):
             description = soup.find("meta", {"name": "description"})['content']
+        connect = get_db_connection()
         with connect.cursor() as cur:
             cur.execute(
                 """
@@ -145,6 +169,7 @@ def check_url(id):
                 VALUES (%s, %s, %s, %s, %s, %s);""",
                 (id, status_code, h1, title, description, created_at))
         connect.commit()
+        connect.close()
     except requests.exceptions.ConnectionError:
         flash('Произошла ошибка при проверке', 'danger')
     return redirect(url_for('show_url', id=id))
