@@ -17,6 +17,43 @@ def get_db_connection():
     return conn
 
 
+def get_request_connection(url):
+    try:
+        result = requests.get(url)
+    except requests.exceptions.ConnectionError:
+        result = None
+    return result
+
+
+def parser(url):
+    result = {
+        'status_code': '',
+        'title': '',
+        'h1': '',
+        'description': ''
+    }
+    r = get_request_connection(url.name)
+    if r:
+        status_code = r.status_code
+        if status_code == 200:
+            result['status_code'] = 200
+            html_doc = r.text
+            soup = BeautifulSoup(html_doc, 'html.parser')
+            if soup.title:
+                result['title'] = soup.title.string
+            if soup.find('h1'):
+                result['h1'] = soup.find('h1').text
+            if soup.find("meta", {"name": "description"}):
+                result['description'] = soup.find(
+                    "meta",
+                    {"name": "description"}
+                )['content']
+            return result
+        else:
+            return None
+    return None
+
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 
@@ -29,7 +66,7 @@ with connect.cursor() as cur:
             name varchar UNIQUE,
             created_at date
             );"""
-        )
+    )
 connect.commit()
 connect.close()
 
@@ -46,7 +83,7 @@ with connect.cursor() as cur:
             description text,
             created_at date
             );"""
-        )
+    )
 connect.commit()
 connect.close()
 
@@ -110,7 +147,7 @@ def add_url():
                     ) AS sorted_checks
                 ON sorted_checks.url_id = dist_urls.id) as result;
                 """
-                )
+            )
             all_urls = cur.fetchall()
         connect.close()
         return render_template(
@@ -150,37 +187,26 @@ def check_url(id):
         cur.execute("SELECT name FROM urls WHERE id=(%s);", (id,))
         url_name = cur.fetchone()
     connect.close()
-    try:
-        title = ''
-        h1 = ''
-        description = ''
-        r = requests.get(url_name.name)
-        status_code = r.status_code
-        if status_code == 200:
-            html_doc = r.text
-            soup = BeautifulSoup(html_doc, 'html.parser')
-            if soup.title:
-                title = soup.title.string
-            if soup.find('h1'):
-                h1 = soup.find('h1').text
-            if soup.find("meta", {"name": "description"}):
-                description = soup.find(
-                    "meta",
-                    {"name": "description"}
-                    )['content']
-            connect = get_db_connection()
-            with connect.cursor() as cur:
-                cur.execute(
-                    """
-                    INSERT INTO url_checks (
-                    url_id, status_code, h1, title, description, created_at)
-                    VALUES (%s, %s, %s, %s, %s, %s);""",
-                    (id, status_code, h1, title, description, created_at))
-            connect.commit()
-            connect.close()
-            flash('Страница успешно проверена', 'success')
-        else:
-            flash('Произошла ошибка при проверке', 'danger')
-    except requests.exceptions.ConnectionError:
+    request_data = parser(url=url_name)
+    if request_data:
+        connect = get_db_connection()
+        with connect.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO url_checks (
+                url_id, status_code, h1, title, description, created_at)
+                VALUES (%s, %s, %s, %s, %s, %s);""",
+                (
+                    id,
+                    request_data['status_code'],
+                    request_data['h1'],
+                    request_data['title'],
+                    request_data['description'],
+                    created_at
+                ))
+        connect.commit()
+        connect.close()
+        flash('Страница успешно проверена', 'success')
+    else:
         flash('Произошла ошибка при проверке', 'danger')
     return redirect(url_for('show_url', id=id))
