@@ -91,7 +91,7 @@ def add_url():
                 return redirect(f'urls/{url_id.id}')
         else:
             flash('Некорректный URL', 'danger')
-            return render_template('start_page.html', url_adress=url)
+            return render_template('start_page.html', url_adress=url), 422
     else:
         connect = get_db_connection()
         with connect.cursor(cursor_factory=NamedTupleCursor) as cur:
